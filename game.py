@@ -104,8 +104,6 @@ def is_square_covered(board, square):
                 if board[move[0]] != " ": return True
     return False
 
-
-# This should be checked by taking in the variable for 
 def castle_filter(board, move):
     id = move[2]
     if not id or id not in "KQkq": return True
@@ -179,11 +177,9 @@ def generate_moves(board, index, action, direction):
     return moves
 
 class Chess:
-
     board = "rnbqkbnr//pppppppp//        //        //        //        //PPPPPPPP//RNBQKBNR"
     en_passant = -1
     castle = "KQkq"
-
     legal_moves = []
     turn = True
 
@@ -206,7 +202,6 @@ class Chess:
         self.legal_moves = self.calculate_legal_moves(index)
         return False
 
-
     def calculate_legal_moves(self, index):
         if index < 0 or 77 < index: return []
         piece = self.board[index]
@@ -221,9 +216,9 @@ class Chess:
         for action in piece.actions:
             for direction in action.directions:
                 legal_moves += generate_moves(self.board, index, action, direction)
-        legal_moves = list(filter(lambda m: check_filter(self.board, self.turn), legal_moves))
-        legal_moves = list(filter(lambda m: state_filter(m, self.en_passant, self.castle), legal_moves))
-        legal_moves = list(filter(lambda m: castle_filter(self.board, m), legal_moves))
+        legal_moves = filter(lambda m: check_filter(self.board, self.turn), legal_moves)
+        legal_moves = filter(lambda m: state_filter(m, self.en_passant, self.castle), legal_moves)
+        legal_moves = filter(lambda m: castle_filter(self.board, m), legal_moves)
         return list(legal_moves)
 
     def check_game_over(self):
