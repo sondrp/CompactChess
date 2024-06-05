@@ -23,17 +23,17 @@ paths = {
     "leaper": (r"^(?:([A-Z])[a-z ]|([a-z])[A-Z ])$", r" \1\2"),
     "ranger": (r"^(?:([A-Z])( *)[a-z ]|([a-z])( *)[A-Z ])$", r" \2\4\1\3"),
     "capture": (r"^(?:([A-Z])[a-z]|([a-z])[A-Z])$", r" \1\2"),
-    "unoccupied": (r"^(?:(\w) )$", r" \1"),
+    "pawnForward": (r"^(?:([Pp])(.) )$", r" \2\1"),
     "pawnDoubleForward": (r"^([Pp])(.. ) $", r" \2\1"),
     "enPassant": (r"^(?:(P)(..)p |(p)(..)P )$", r" \2\4 \1\3"),
+    "wQueen": (r"^P(.) $", r" \1Q"),
+    "bQueen": (r"^p(.) $", r" \1q"),
     "castle": (r"^(?:(K) (  ?)(R)(.)|(k) (  ?)(r)(.))$", r" \3\7\1\5\2\6\4\8"),
-    
-    # The following are used in the reverse king piece. To see if the king is in check.
-    "orthogonal": (r"Kk|kK|K\s*[qr]|k\s*[QR]", r""),
-    "diagonal": (r"Kk|kK|K\s*[qb]|k\s*[QB]", r""),
-    "bPawnAttack": (r"Kp", r""),
-    "wPawnAttack": (r"kP", r""),
-    "knightAttack": (r"Kn|kN", r""),
+    "orthogonal": (r"[A-Z]k|[a-z]K|[A-Z]\s*[qr]|[a-z]\s*[QR]", r""),
+    "diagonal": (r"[A-Z]k|[a-z]K|[A-Z]\s*[qb]|[a-z]\s*[QB]", r""),
+    "bPawnAttack": (r"[A-Z]p", r""),
+    "wPawnAttack": (r"[a-z]P", r""),
+    "knightAttack": (r"[A-Z]n|[a-z]N", r""),
 }
 
 id_to_castle_squares = {
@@ -60,15 +60,17 @@ bKing = Piece([
     Action(["W W- W W 7SE"], "castle", "q"),
 ])
 wPawn = Piece([
-    Action(["NE", "NW"], "capture", "P"),
-    Action(["N"], "unoccupied", "P"),
+    Action(["NE", "NW"], "capture"),
+    Action(["NN S"], "pawnForward"),
+    Action(["6S 7N"], "wQueen"),
     Action(["S 7N 5S N"], "pawnDoubleForward", "pawnDoubleForward"),
     Action(["4S 7N 3S1W N", "4S 7N 3S1E N"], "enPassant", "enPassant"),
 ])
 
 bPawn = Piece([
-    Action(["SE", "SW"], "capture", "p"),
-    Action(["S"], "unoccupied", "p"),
+    Action(["SE", "SW"], "capture"),
+    Action(["NN S"], "pawnForward"),
+    Action(["6S 7N"], "bQueen"),
     Action(["N 7S 5N S"], "pawnDoubleForward", "pawnDoubleForward"),
     Action(["4N 7S 3N1S S", "4N 7S 3N1E S"], "enPassant", "enPassant"),
 ])
