@@ -215,7 +215,7 @@ def update_state(state: State, move: Move):
         if result[70] != "r": state.castle = state.castle.replace("q", "")
         if result[77] != "r": state.castle = state.castle.replace("k", "")
 
-    state.board = result
+    state.board = "".join(result)
     state.half_move += 1
     state.full_move += 0 if state.turn else 1 
     state.turn = not state.turn
@@ -249,17 +249,25 @@ class Chess:
         self.legal_moves = generate_legal_moves(state, square)
         return False
     
-    def print(self):
-        print(self.state.board.replace("//", "\n"))
+    def get_legal_moves(self):
+        return list(map(lambda l: Move(l.square, self.fen(l.result), l.id), self.legal_moves))
+    
+    def fen(self, board=None):
+        state = self.state
+        board = board if board else state.board
+        board = state.board.replace("//", "/")
+        board = re.sub(r"\s+", lambda m: str(len(m.group(0))), board)
+        turn = "w" if state.turn else "b"
+        return f"{board} {turn} {state.castle} - {state.half_move} {state.full_move}"
 
 def main():
-    chess = Chess("2k5/8/8/8/8/8/8/4K2R w K - 0 1")
+    chess = Chess()
     while (chess.game_active):
-        square = int(input("Square: "))
-        if (chess.click(square)):
-            chess.print()
-        else:
-            print([m.square for m in chess.legal_moves])
+        for square in [60, 20]:
+            chess.click(square)
+            print(chess.fen())
+            print(chess.get_legal_moves())
+
 
 if __name__ == "__main__":
     main()
