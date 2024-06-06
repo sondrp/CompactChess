@@ -4,7 +4,7 @@ import { reset } from "../network/requests";
 import { GameInfo, LegalMove, ClickResult } from "../types";
 import Square from "./Square";
 
-function processGame(game: string) {
+export function processGame(game: string) {
     const match = /^\S+/.exec(game);
     if (!match) return '';
     let gamestring = match[0].replace(/\//g, '');
@@ -27,13 +27,13 @@ function processGame(game: string) {
     });
   }
 
-export default function Board({ data }: { data: GameInfo }) {
-    const [board, setBoard] = useState(processGame(data.game));
+export default function Board({ gameInfo }: { gameInfo: GameInfo }) {
+    const [board, setBoard] = useState(processGame(gameInfo.board));
     const [legalMoves, setLegalMoves] = useState<LegalMove[]>([]);
   
     const { mutate } = useMutation({
       mutationFn: reset,
-      onSuccess: (data) => setBoard(processGame(data.game)),
+      onSuccess: (gameInfo) => setBoard(processGame(gameInfo.board)),
     });
   
     const handleClick = (clickResult: ClickResult) => {

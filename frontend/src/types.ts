@@ -1,5 +1,8 @@
 export type GameInfo = {
-  game: string;
+  id: number
+  board: string;
+  white: string, 
+  black: string
 };
 
 export type LegalMove = {
@@ -11,4 +14,8 @@ export type LegalMove = {
 export type ClickResult = {
   game: string,
   legal_moves: LegalMove[]
+}
+
+export type User = {
+  username: string
 }

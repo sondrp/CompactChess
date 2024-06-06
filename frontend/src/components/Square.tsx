@@ -31,7 +31,8 @@ export default function Square(props: SquareProps) {
       className={cn(
         'size-20 flex items-center justify-center relative',
         isWhite ? 'bg-orange-200' : 'bg-orange-800',
-        isPlayerPiece && 'cursor-pointer'
+        isPlayerPiece && 'cursor-pointer',
+        !!legalMove && 'cursor-pointer',
       )}
     >
       {piece != ' ' && (
