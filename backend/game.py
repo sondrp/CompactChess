@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import List, Optional
 import re
 
+# Chess implementation that is compact, but still possible to reason about (for me).
+# Not intended to be an example of good code.
+
 @dataclass
 class State:
     board: str
@@ -130,7 +133,6 @@ def is_king_in_check(board, white_king):
     king_index = board.find(king_to_find)
     return is_square_covered(board, king_index, not white_king)
 
-# Return false only if the move is attempting to en passant illegally.
 def en_passant_filter(state: State, move: Move):
     return move.id != "enPassant" or move.square == state.en_passant
 
@@ -142,7 +144,6 @@ def castle_filter(state: State, move: Move):
     if id not in castle: return False
 
     index = "QKqk".find(id)
-
     castle_squares = [[72, 73, 74], [74, 75, 76], [2, 3, 4], [4, 5, 6]][index]
 
     for square in castle_squares:
@@ -194,10 +195,7 @@ def update_state(state: State, move: Move):
     square, result, id = move.square, move.result, move.id
     result = list(result)
     
-    if id == "twoForward":
-        state.en_passant = square + (10 if state.turn else -10)
-    else: 
-        state.en_passant = -1
+    state.en_passant = -1 if id != "twoForward" else square + (10 if state.turn else -10)
 
     if id == "P" and square // 10 == 0:
         result[square] = "Q"
@@ -208,12 +206,11 @@ def update_state(state: State, move: Move):
     if re.match(r"[KQkq]+", id):
         state.castle = "".join([l for l in state.castle if l not in id])
 
-    if id == "R":
-        if result[0] != "R": state.castle = state.castle.replace("Q", "")
-        if result[7] != "R": state.castle = state.castle.replace("K", "")
-    if id == "r":
-        if result[70] != "r": state.castle = state.castle.replace("q", "")
-        if result[77] != "r": state.castle = state.castle.replace("k", "")
+    for letter in state.castle:
+        i = "KQkq".find(letter)
+        i = [7, 0, 77, 70][i]
+        if result[i] == " ":
+            state.castle = state.castle.replace(letter, "")
 
     state.board = "".join(result)
     state.half_move += 1
