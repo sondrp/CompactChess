@@ -18,6 +18,13 @@ app.add_middleware(
 
 chess = Chess()
 
+@app.get("/reset")
+def reset():
+    global chess
+    chess = Chess()
+    return {"game": chess.fen()}
+
+
 @app.get("/")
 def read_root():
     return {
