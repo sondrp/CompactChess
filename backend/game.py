@@ -64,6 +64,20 @@ bPawn = Piece([
     Action([20], unoccupied, "twoForward"),
     Action(bPawnAttack, unoccupied, "enPassant"),
 ])
+white_cover = Piece([
+    Action(wPawnAttack, r".P"),
+    Action(knight_move, r".N"),
+    Action(diag_and_ort, r".K"),
+    Action(orthogonal, r".\s*[QR]"),
+    Action(diagonal, r".\s*[QB]"),
+])
+black_cover = Piece([
+    Action(bPawnAttack, r".p"),
+    Action(knight_move, r".n"),
+    Action(diag_and_ort, r".k"),
+    Action(orthogonal, r".\s*[qr]"),
+    Action(diagonal, r".\s*[qb]"),
+])
 
 piece_map = {
     'R': Piece([Action(orthogonal, ranger, "R")]),
@@ -78,6 +92,8 @@ piece_map = {
     'k': bKing,
     'P': wPawn,
     'p': bPawn,
+    'wc': white_cover,
+    'bc': black_cover,
 }
 
 def generate_moves(board, index, action: Action, include_board=True) -> List[Move]:
@@ -103,24 +119,8 @@ def generate_moves(board, index, action: Action, include_board=True) -> List[Mov
 
     return results
 
-white_cover_piece = Piece([
-    Action(wPawnAttack, r".P"),
-    Action(knight_move, r".N"),
-    Action(diag_and_ort, r".K"),
-    Action(orthogonal, r".\s*[QR]"),
-    Action(diagonal, r".\s*[QB]"),
-])
-black_cover_piece = Piece([
-    Action(bPawnAttack, r".p"),
-    Action(knight_move, r".n"),
-    Action(diag_and_ort, r".k"),
-    Action(orthogonal, r".\s*[qr]"),
-    Action(diagonal, r".\s*[qb]"),
-])
-
 def is_square_covered(board, index, by_white):
-    cover_piece = white_cover_piece if by_white else black_cover_piece 
-    for action in cover_piece.actions:
+    for action in piece_map["wc" if by_white else "bc"].actions:
         for move in generate_moves(board, index, action, False):
             if board[move.square] != " ": return True
     return False
@@ -259,15 +259,3 @@ class Chess:
         board = re.sub(r"\s+", lambda m: str(len(m.group(0))), board)
         turn = "w" if state.turn else "b"
         return f"{board} {turn} {state.castle} - {state.half_move} {state.full_move}"
-
-def main():
-    chess = Chess()
-    while (chess.game_active):
-        for square in [60, 20]:
-            chess.click(square)
-            print(chess.fen())
-            print(chess.get_legal_moves())
-
-
-if __name__ == "__main__":
-    main()
