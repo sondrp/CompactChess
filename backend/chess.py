@@ -134,7 +134,12 @@ def is_king_in_check(board, white_king):
     return is_square_covered(board, king_index, not white_king)
 
 def en_passant_filter(state: State, move: Move):
-    return move.id != "enPassant" or move.square == state.en_passant
+    if move.id != "enPassant": return True
+    if move.square != state.en_passant: return False
+    board = list(move.result)
+    board[move.square + (10 if state.turn else -1)] = " "
+    move.result = "".join(board)
+    return True
 
 def castle_filter(state: State, move: Move):
     square, result, id = move.square, move.result, move.id

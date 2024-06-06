@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
-from game import Chess
+from backend.chess import Chess
 
 app = FastAPI()
 
