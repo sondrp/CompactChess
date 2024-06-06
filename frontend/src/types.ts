@@ -2,7 +2,7 @@ export type GameInfo = {
   game: string;
 };
 
-type LegalMove = {
+export type LegalMove = {
   square: number,
   result: string,
   id: string
