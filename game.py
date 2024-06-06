@@ -34,10 +34,10 @@ diagonal = [-9, 11, 9, -11]
 orthogonal = [1, 10, -1, -10]
 diag_and_ort = [-9, 1, 11, 10, 9, -1, -11, -10]
 
-ranger = re.compile(r"^(?:[A-Z]\s*[a-z ]|[a-z]\s*[A-Z ])")
-leaper = re.compile(r"^(?:[A-Z][a-z ]|[a-z][A-Z ])")
+ranger = re.compile(r"[A-Z]\s*[a-z ]|[a-z]\s*[A-Z ]")
+leaper = re.compile(r"[A-Z][a-z ]|[a-z][A-Z ]")
 unoccupied = re.compile(r"^. ")
-capture = re.compile(r"^(?:[A-Z][a-z]|[a-z][A-Z])")
+capture = re.compile(r"[A-Z][a-z]|[a-z][A-Z]")
 
 knight = Piece([Action(knight_move, leaper)])
 bishop = Piece([Action(diagonal, ranger)])
@@ -118,7 +118,6 @@ black_cover_piece = Piece([
     Action(diagonal, r".\s*[qb]"),
 ])
 
-
 def is_square_covered(board, index, by_white):
     cover_piece = white_cover_piece if by_white else black_cover_piece 
     for action in cover_piece.actions:
@@ -135,8 +134,6 @@ def is_king_in_check(board, white_king):
 def en_passant_filter(state: State, move: Move):
     return move.id != "enPassant" or move.square == state.en_passant
 
-
-
 def castle_filter(state: State, move: Move):
     square, result, id = move.square, move.result, move.id
     if id == "" or id not in "QKqk": return True
@@ -152,11 +149,8 @@ def castle_filter(state: State, move: Move):
         if (is_square_covered(result, square, not state.turn)):
             return False
 
-    result = list(move.result)
-    replacements = [" ", "R", "K"] if state.turn else [" ", "r", "k"]
-    for i, square in enumerate(castle_squares):
-        result[square] = replacements[i]
-    move.result = "".join(result)
+    pattern, repl = [(r"R K ", r"  KR"), (r" KR", r"RK "), (r"r k ", r"  kr"), (r" kr", r"rk ")][index]
+    move.result = re.sub(pattern, repl, move.result)
     return True
 
 def in_check_filter(state: State, move: Move):
@@ -185,7 +179,6 @@ def generate_legal_moves(state, index, include_board=True) -> List[Move]:
     if piece.isupper() != state.turn:
         return []
         
-    piece = board[index]
     piece = piece_map[piece]
 
     legal_moves = []
@@ -199,21 +192,28 @@ def generate_legal_moves(state, index, include_board=True) -> List[Move]:
 
 def update_state(state: State, move: Move):
     square, result, id = move.square, move.result, move.id
+    result = list(result)
     
     if id == "twoForward":
         state.en_passant = square + (10 if state.turn else -10)
     else: 
         state.en_passant = -1
-    
 
+    if id == "P" and square // 10 == 0:
+        result[square] = "Q"
+
+    if id == "p" and square // 10 == 7:
+        result[square] = "q"
+    
     if re.match(r"[KQkq]+", id):
         state.castle = "".join([l for l in state.castle if l not in id])
 
-    # lord have mercy...
-    if result[0] != "R": state.castle = state.castle.replace("Q", "")
-    if result[7] != "R": state.castle = state.castle.replace("K", "")
-    if result[70] != "r": state.castle = state.castle.replace("q", "")
-    if result[77] != "r": state.castle = state.castle.replace("k", "")
+    if id == "R":
+        if result[0] != "R": state.castle = state.castle.replace("Q", "")
+        if result[7] != "R": state.castle = state.castle.replace("K", "")
+    if id == "r":
+        if result[70] != "r": state.castle = state.castle.replace("q", "")
+        if result[77] != "r": state.castle = state.castle.replace("k", "")
 
     state.board = result
     state.half_move += 1
@@ -253,7 +253,7 @@ class Chess:
         print(self.state.board.replace("//", "\n"))
 
 def main():
-    chess = Chess()
+    chess = Chess("2k5/8/8/8/8/8/8/4K2R w K - 0 1")
     while (chess.game_active):
         square = int(input("Square: "))
         if (chess.click(square)):
@@ -263,4 +263,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
