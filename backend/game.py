@@ -252,7 +252,7 @@ class Chess:
     def fen(self, board=None):
         state = self.state
         board = board if board else state.board
-        board = state.board.replace("//", "/")
+        board = board.replace("//", "/")
         board = re.sub(r"\s+", lambda m: str(len(m.group(0))), board)
         turn = "w" if state.turn else "b"
         return f"{board} {turn} {state.castle} - {state.half_move} {state.full_move}"
