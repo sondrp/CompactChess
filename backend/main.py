@@ -60,6 +60,26 @@ def reset():
     chess = Chess()
     return {"game": chess.fen()}
 
+@app.get("/games/{id}")
+def get_game(id: int, db: sqlite3.Connection = Depends(db)):
+    c = db.cursor()
+    c.execute("SELECT id, board, white, black FROM games WHERE id = ?", (id, ))
+    game = c.fetchone()
+
+    if game is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    board = game[1]
+    global chess
+    chess = Chess(board)
+
+    
+    return {
+        "id": game[0],
+        "board": board,
+        "white": game[2],
+        "black": game[3]
+    }
 
 @app.get("/")
 def read_root():
