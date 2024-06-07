@@ -16,6 +16,3 @@ export type ClickResult = {
   legal_moves: LegalMove[]
 }
 
-export type User = {
-  username: string
-}

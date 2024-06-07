@@ -1,75 +1,22 @@
-import { ClickResult, GameInfo, User } from '../types';
+import { ClickResult, GameInfo } from '../types';
 
 const endpoint = 'http://localhost:8000';
-
-export async function reset(): Promise<GameInfo> {
-  const data = await fetch(`${endpoint}/reset`);
-  return data.json();
-}
-
-export async function getUser(username: string): Promise<User> {
-  const data = await fetch(`${endpoint}/users`, {
-    headers: {
-      username: username,
-    },
-  });
-  return data.json();
-}
 
 export async function getGame(id: string): Promise<GameInfo> {
   const data = await fetch(`${endpoint}/games/${id}`);
   return data.json();
 }
 
-export async function createGame({
-  username,
-  asWhite,
-}: {
-  username: string;
-  asWhite: boolean;
-}): Promise<GameInfo> {
-  const white = asWhite ? username : 'no opponent';
-  const black = asWhite ? 'no opponent' : username;
-  const data = await fetch(`${endpoint}/create`, {
-    headers: { white, black },
-  });
+export async function createGame({white, black}: {white: string, black: string}): Promise<GameInfo> {
+  const data = await fetch(`${endpoint}/create/${white}/${black}`);
   return data.json();
 }
 
-export async function join({
-  id,
-  color,
-  username,
-}: {
-  id: string,
-  color: string,
-  username: string
-}) {
-  console.log(`joining ${id} as ${username}`)
-  await fetch(`${endpoint}/games/join/${id}`, {
-    headers: {
-      color,
-      username,
-    }
-  })
+export async function join({id, username, color,}: { id: string, username: string, color: string}) {
+  await fetch(`${endpoint}/games/join/${id}/${username}/${color}`);
 }
 
-export async function click({
-  id,
-  index,
-  player,
-}: {
-  id: string;
-  index: number;
-  player: string;
-}): Promise<ClickResult> {
-  const turn = player === 'w' ? 'true' : 'false';
-  const data = await fetch(`${endpoint}/click`, {
-    headers: {
-      id,
-      index: index.toString(),
-      white: turn,
-    },
-  });
+export async function click({ id, username, square}: { id: string, username: string, square: number}): Promise<ClickResult> {
+  const data = await fetch(`${endpoint}/games/${id}/${username}/${square}`)
   return data.json();
 }

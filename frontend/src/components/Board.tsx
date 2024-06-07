@@ -26,23 +26,29 @@ function processLegalMoves(legalMoves: LegalMove[]): LegalMove[] {
   });
 }
 
+const extractTurn = (fen: string) => fen.split(" ")[1] 
+
 export default function Board({ gameInfo }: { gameInfo: GameInfo }) {
-  const { id, white, black } = gameInfo;
   const [board, setBoard] = useState(processGame(gameInfo.board));
   const [legalMoves, setLegalMoves] = useState<LegalMove[]>([]);
+  const [turn, setTurn] = useState(extractTurn(gameInfo.board))
 
   const handleClick = (clickResult: ClickResult) => {
+    setTurn(extractTurn(clickResult.game))
     setBoard(processGame(clickResult.game));
     setLegalMoves(processLegalMoves(clickResult.legal_moves));
   };
 
+  const {white, black} = gameInfo
+  const pattern = RegExp(`w-${white}-[RNBQKP]|b-${black}-[rnbqkp]`)
+
   return (
     <div>
-      <Opponent name={black} />
-      <div className='grid grid-cols-8 w-fit'>
+      <div className='grid grid-cols-8 w-fit border-2 shadow-2xl border-black'>
         {Array.from({ length: 64 }).map((_, i) => (
           <Square
-            id={id.toString()}
+            pattern={pattern}
+            turn={turn}
             legalMove={legalMoves.find((m) => m.square === i)}
             handleClick={handleClick}
             key={i}
@@ -51,7 +57,6 @@ export default function Board({ gameInfo }: { gameInfo: GameInfo }) {
           />
         ))}
       </div>
-      <div className='text-center py-2'>{white}</div>
     </div>
   );
 }

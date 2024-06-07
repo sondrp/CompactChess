@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Header, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 from chess import Chess
+import re
 
 app = FastAPI()
 
@@ -27,39 +28,6 @@ def db():
 chess = Chess()
 default_board = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-@app.get("/users")
-def create_user(username: str = Header(...), db: sqlite3.Connection = Depends(db)):
-    c = db.cursor()
-
-    c.execute("SELECT username FROM users WHERE username = ?", (username,))
-    user = c.fetchone()
-    if user:
-        return {"username": user[0]}
-
-    try:
-        c.execute("INSERT INTO users (username) VALUES (?)", (username,))
-        db.commit()
-        return {"username": username}
-    except sqlite3.IntegrityError:
-        raise HTTPException(status_code=400, detail="username already exist")
-
-@app.get("/create")
-def create_game(white: str = Header(...), black: str = Header(...), db: sqlite3.Connection = Depends(db)):
-    c = db.cursor()
-    c.execute("INSERT INTO games (board, white, black) VALUES (?, ?, ?)", (
-        default_board,
-        white,
-        black
-    ))
-    db.commit()
-    return {"id": c.lastrowid, "board": default_board, "white": white, "black": black}
-
-@app.get("/reset")
-def reset():
-    global chess
-    chess = Chess()
-    return {"game": chess.fen()}
-
 @app.get("/games/{id}")
 def get_game(id: int, db: sqlite3.Connection = Depends(db)):
     c = db.cursor()
@@ -73,7 +41,6 @@ def get_game(id: int, db: sqlite3.Connection = Depends(db)):
     global chess
     chess = Chess(board)
 
-    
     return {
         "id": game[0],
         "board": board,
@@ -81,32 +48,49 @@ def get_game(id: int, db: sqlite3.Connection = Depends(db)):
         "black": game[3]
     }
 
-@app.get("/")
-def read_root():
-    return {
-        "game": chess.fen()
-    }
-
-@app.get("/games/join/{id}")
-def join(id: int, color: str = Header(...), username = Header(...), db: sqlite3.Connection = Depends(db)):
+@app.get("/create/{white}/{black}")
+def create_game(white: str, black: str, db: sqlite3.Connection = Depends(db)):
     c = db.cursor()
-    print(id)
-    print(color)
-    print(username)
+    c.execute("INSERT INTO games (board, white, black) VALUES (?, ?, ?)", (
+        default_board,
+        white,
+        black
+    ))
+    db.commit()
+    return {"id": c.lastrowid, "board": default_board, "white": white, "black": black}
+
+
+@app.get("/games/join/{id}/{username}/{color}")
+def join(id: int, color: str, username: str, db: sqlite3.Connection = Depends(db)):
+    c = db.cursor()
     if color == "white": 
         c.execute("""UPDATE games SET white = ? WHERE id = ?""", (username, id))
     if color == "black":
         c.execute("""UPDATE games SET black = ? WHERE id = ?""", (username, id))
     db.commit()
 
-@app.get("/click")
-def click(id: int = Header(...), index: int = Header(...), white: bool = Header(...), db: sqlite3.Connection = Depends(db)):
-    if chess.state.turn == white: 
-        move_exectuted = chess.click(index)
-        if move_exectuted:
-            c = db.cursor()
-            c.execute("""UPDATE games SET board = ? WHERE id = ?""", (chess.fen(), id))
-            db.commit()
+@app.get("/games/{id}/{username}/{square}")
+def click(id: int, username: str, square: int, db: sqlite3.Connection = Depends(db)):
+    c = db.cursor()
+    c.execute("""SELECT board, white, black FROM games WHERE id = ?""", (id,))
+    game = c.fetchone()
+
+    if not game:
+        raise HTTPException(status_code=404, detail=f"no game with id {id} exist")
+
+    board, white, black = game[0], game[1], game[2] 
+
+    pattern = re.compile(fr"w-{white}|b-{black}")
+    test = f"{board.split(' ')[1]}-{username}"
+
+    if not re.match(pattern, test):
+        raise HTTPException(status_code=404, detail=f"{username} is not allowed to make a move here")
+
+    move_exectuted = chess.click(square)
+    if move_exectuted:
+        c = db.cursor()
+        c.execute("""UPDATE games SET board = ? WHERE id = ?""", (chess.fen(), id))
+        db.commit()
 
     return {
         "game": chess.fen(),
