@@ -9,12 +9,12 @@ const PLAYER_COLOR = 'w'; // TODO : make dynamic
 type SquareProps = {
   legalMove?: LegalMove;
   handleClick: (clickResult: ClickResult) => void;
+  id: string
   index: number;
   piece: string;
 };
-/* On click -> a request should be sent to the api. */
 export default function Square(props: SquareProps) {
-  const { legalMove, handleClick, index, piece } = props;
+  const { id, legalMove, handleClick, index, piece } = props;
   const column = index % 8;
   const row = Math.floor(index / 8);
   const isWhite = column % 2 === row % 2;
@@ -27,7 +27,7 @@ export default function Square(props: SquareProps) {
 
   return (
     <div
-      onClick={() => mutate({ index: index + 2 * row, player: PLAYER_COLOR })}
+      onClick={() => mutate({ id, index: index + 2 * row, player: PLAYER_COLOR })}
       className={cn(
         'size-20 flex items-center justify-center relative',
         isWhite ? 'bg-orange-200' : 'bg-orange-800',

@@ -87,10 +87,27 @@ def read_root():
         "game": chess.fen()
     }
 
+@app.get("/games/join/{id}")
+def join(id: int, color: str = Header(...), username = Header(...), db: sqlite3.Connection = Depends(db)):
+    c = db.cursor()
+    print(id)
+    print(color)
+    print(username)
+    if color == "white": 
+        c.execute("""UPDATE games SET white = ? WHERE id = ?""", (username, id))
+    if color == "black":
+        c.execute("""UPDATE games SET black = ? WHERE id = ?""", (username, id))
+    db.commit()
+
 @app.get("/click")
-def read_item(index: int = Header(...), white: bool = Header(...)):
+def click(id: int = Header(...), index: int = Header(...), white: bool = Header(...), db: sqlite3.Connection = Depends(db)):
     if chess.state.turn == white: 
-        chess.click(index)
+        move_exectuted = chess.click(index)
+        if move_exectuted:
+            c = db.cursor()
+            c.execute("""UPDATE games SET board = ? WHERE id = ?""", (chess.fen(), id))
+            db.commit()
+
     return {
         "game": chess.fen(),
         "legal_moves": chess.get_legal_moves()
