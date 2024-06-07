@@ -4,7 +4,7 @@ import { getGame, join } from '../network/requests';
 import Board from '../components/Board';
 
 export default function GamePage() {
-  const { username, id } = useParams();
+  const { id, username} = useParams();
   if (!username || !id) throw Error('something went wrong with the params');
 
   const { data, isSuccess } = useQuery({
@@ -31,7 +31,7 @@ export default function GamePage() {
 }
 
 function Join({color}: {color: string}) {
-  const { username, id } = useParams();
+  const { id, username} = useParams();
   if (!username || !id) throw Error('something went wrong with the params');
 
   const queryClient = useQueryClient()

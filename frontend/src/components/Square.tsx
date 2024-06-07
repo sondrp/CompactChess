@@ -19,7 +19,7 @@ type SquareProps = {
 // server, but does not hurt do do here either I guess. For that we need players, and turn. which we get from the gamestring.
 // not provided here. could pass in a test? Can check against the pieces maybe? 
 export default function Square(props: SquareProps) {
-  const { username, id } = useParams()
+  const { id, username} = useParams()
   if (!username || !id) throw Error("bad params")
 
   const { pattern, turn, legalMove, handleClick, index, piece } = props;

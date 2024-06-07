@@ -32,7 +32,7 @@ function CreateGame() {
       mutationFn: createGame,
       onMutate: () => setButtonText('Loading...'),
       onSuccess: (gameInfo) => {
-        navigate(`/${username}/${gameInfo.id}`);
+        navigate(`/${gameInfo.id}/${username}`);
       },
     });
     return (
