@@ -1,16 +1,21 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
-from sqlite3 import connect, Connection
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from chess import Chess
 from queries import GameInfo, query_update_game, query_get_game, query_create_game
 
 app = FastAPI()
 
-def db():
-    try:
-        db = connect("chess.db")
-        yield db
-    finally:
-        db.close()
+origins = [
+    "http://localhost:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("games/{id}")
 def get_game(id: int, db: Connection = Depends(db)):
