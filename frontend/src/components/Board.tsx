@@ -11,9 +11,6 @@ export function processGame(game: string) {
   return gamestring;
 }
 
-// Remove padding from the squares. The padding is
-// used on the backend, but not needed here.
-// This should probably be a job for the api, but oh well.
 function processLegalMoves(legalMoves: LegalMove[]): LegalMove[] {
   return legalMoves.map((m) => {
     const { result, square, id } = m;
@@ -26,45 +23,43 @@ function processLegalMoves(legalMoves: LegalMove[]): LegalMove[] {
   });
 }
 
-const extractTurn = (fen: string) => fen.split(" ")[1] 
+const extractTurn = (fen: string) => fen.split(' ')[1];
 
 export default function Board({ gameInfo }: { gameInfo: GameInfo }) {
-  const { id, username } = useParams()
+  const { id, username } = useParams();
 
   const [board, setBoard] = useState(processGame(gameInfo.board));
   const [legalMoves, setLegalMoves] = useState<LegalMove[]>([]);
-  const [turn, setTurn] = useState(extractTurn(gameInfo.board))
+  const [turn, setTurn] = useState(extractTurn(gameInfo.board));
 
-  const [ws, setWs] = useState<WebSocket | null>(null)
+  const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
     const socket = new WebSocket(`ws://localhost:8000/ws/${id}/${username}`);
-    
+
     socket.addEventListener('open', () => {
       setWs(socket);
     });
-  
-    socket.addEventListener('message', event => {
-      const clickResult: ClickResult = JSON.parse(event.data)
-      setTurn(extractTurn(clickResult.game))
+
+    socket.addEventListener('message', (event) => {
+      const clickResult: ClickResult = JSON.parse(event.data);
+      setTurn(extractTurn(clickResult.game));
       setBoard(processGame(clickResult.game));
       setLegalMoves(processLegalMoves(clickResult.legal_moves));
     });
-  
+
     return () => {
       socket.close();
     };
   }, [id, username]);
 
-
-
   const handleClick = (square: number) => {
-    if (!ws) return
-    ws.send(square.toString())
-  }
+    if (!ws) return;
+    ws.send(square.toString());
+  };
 
-  const {white, black} = gameInfo
-  const pattern = RegExp(`w-${white}-[RNBQKP]|b-${black}-[rnbqkp]`)
+  const { white, black } = gameInfo;
+  const pattern = RegExp(`w-${white}-[RNBQKP]|b-${black}-[rnbqkp]`);
 
   return (
     <div>

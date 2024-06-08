@@ -2,16 +2,15 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function SelectUsernamePage() {
-    const navigate = useNavigate()
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
 
   const handleEnter = (e: React.KeyboardEvent) => {
-    if (e.key !== "Enter") return
-    if (username.length < 3) return
+    if (e.key !== 'Enter') return;
+    if (username.length < 3) return;
 
-    navigate(`/${username}`)
-  }
-
+    navigate(`/${username}`);
+  };
 
   return (
     <div className='flex-1 font-semibold text-xl flex flex-col gap-40 items-center justify-center'>
@@ -35,9 +34,14 @@ export default function SelectUsernamePage() {
         )}
       </div>
       <div className='text-sm'>
-
-      <p>And before you say anything; no, I am not stopping you from using someone else's username. </p>
-      <p>This project is not serious enough for me to implement proper authorization/access control.</p>
+        <p>
+          And before you say anything; no, I am not stopping you from using
+          someone else's username.{' '}
+        </p>
+        <p>
+          This project is not serious enough for me to implement proper
+          authorization/access control.
+        </p>
       </div>
     </div>
   );
