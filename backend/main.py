@@ -1,8 +1,11 @@
+from dataclasses import asdict
+import json
+import re
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from chess import Chess
-from queries import GameInfo, query_update_game, query_get_game, query_create_game
-from typing import Dict
+from queries import GameInfo, query_update_game, query_get_game, query_create_game, query_get_games
+from typing import Dict, Optional
 
 app = FastAPI()
 
@@ -26,38 +29,60 @@ def get_game(id: int):
 
     return game
     
+@app.get("/games/user/{username}")
+def get_games(username: str):
+    return query_get_games(username)
+
 @app.get("/create/{white}/{black}")
 def create_game(white:str, black: str):
     return query_create_game(GameInfo(white, black))
 
-
-@app.get("/games/join/{id}/{username}/{color}")
-def join(id: int, username: str, color: str):
-    game = get_game(id)
-    if color == "white":
-        game.white = username
-    if color == "black":
-        game.black = username
-    
-    query_update_game(game)
+def make_can_click_pattern(game_info: GameInfo):
+    return re.compile(fr"w-{game_info.white}|b-{game_info.black}")
 
 class SessionManager:
     def __init__(self, game_info: GameInfo):
         self.game_info = game_info
         self.chess = Chess(game_info.board)
-        self.active_connections: list[WebSocket] = []
+        self.can_click = make_can_click_pattern(game_info)
 
-    async def connect(self, websocket: WebSocket):
+        self.white_connection: Optional[WebSocket] = None
+        self.black_connection: Optional[WebSocket] = None
+
+    # TODO : figure out how to refuse connections
+    async def connect(self, websocket: WebSocket, username: str):
+        white = self.game_info.white
+        black = self.game_info.black
         await websocket.accept()
-        self.active_connections.append(websocket)
 
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-        return len(self.active_connections) == 0
+        if username == white or white == "no opponent": 
+            self.white_connection = websocket
+            self.game_info.white = username
 
-    async def click(self, square: int):
+        if username == black or black == "no opponent":
+            self.white_connection = websocket
+            self.game_info.black = username
+        
+        self.can_click = make_can_click_pattern(self.game_info)
+        query_update_game(self.game_info)
+
+    def disconnect(self, websocket: WebSocket) -> bool:
+        if websocket == self.white_connection:
+            self.white_connection = None
+
+        if websocket == self.black_connection:
+            self.black_connection = None
+
+        # True if any player remain
+        return not self.white_connection and not self.black_connection        
+
+    async def click(self, username: str, square: int):
         chess = self.chess
-        move_executed = chess.click(square)
+        move_executed = False
+
+        turn = "w" if chess.state.turn else "b"
+        if re.match(self.can_click, f"{turn}-{username}"):
+            move_executed = chess.click(square)
         fen = chess.fen()
 
         if move_executed:
@@ -69,40 +94,57 @@ class SessionManager:
             for move in chess.get_legal_moves()
         ]
 
-        for connection in self.active_connections:
-            await connection.send_json({"game": fen, "legal_moves": legal_moves})
+        # TODO : don't send legal moves to the opponent
+        await self.broadcast({"type": "click_result", "game": fen, "legal_moves": json.dumps(legal_moves)})
+    
+    async def broadcast(self, data):
+        if self.white_connection is not None:
+            await self.white_connection.send_json(data)
+        if self.black_connection is not None:
+            await self.black_connection.send_json(data)
 
-games: Dict[int, SessionManager] = {}
 
-@app.websocket("/ws/{game_id}/{username}")
+managers: Dict[int, SessionManager] = {}
+
+@app.websocket("/ws/join/{game_id}/{username}")
 async def websocket_endpoint(
     websocket: WebSocket, 
     game_id: int, 
     username: str, 
 ):
+    
+    if game_id not in managers:
+        game = query_get_game(game_id)
+        if not game:
+            raise HTTPException(404, "Game not found")
 
-    game = query_get_game(game_id)
-    if not game:
-        raise HTTPException(status_code=404, detail="Game not found")
+        managers[game_id] = SessionManager(game)
 
-    if game_id not in games:
-        games[game_id] = SessionManager(game)
+    manager = managers[game_id]
+    await manager.connect(websocket, username)
+    
+    await manager.broadcast({"type": "game_info", "game_info": json.dumps(asdict(manager.game_info))})
 
-    manager = games[game_id]
-
-    await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
+            data = json.loads(data)
+            action = data.get("action")
+            if not action:
+                raise HTTPException(404, "websocket data must contain some action specification")
 
-            square = int(data)
-            row = square // 8
-            square += row * 2
-            await manager.click(square)
+            print("we the best music")
+            if action == "click":
+                username = data.get("username")
+
+                square = int(data.get("square"))
+                row = square // 8
+                square += row * 2
+                await manager.click(username, square)
             
-
     except WebSocketDisconnect:
         empty_game = manager.disconnect(websocket)
         print(f"{username} has left the game.")
         if empty_game:
-            del games[game_id]
+            print("No connections left, deleting session manager")
+            del managers[game_id]

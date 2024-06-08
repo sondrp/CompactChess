@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { join } from '../network/requests';
+import { join } from '../api/requests';
 import { useParams } from 'react-router-dom';
 
 export default function Opponent({ name }: { name: string }) {

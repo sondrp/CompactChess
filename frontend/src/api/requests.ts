@@ -7,6 +7,11 @@ export async function getGame(id: string): Promise<GameInfo> {
   return data.json();
 }
 
+export async function getGames(username: string): Promise<GameInfo[]> {
+  const data = await fetch(`${endpoint}/games/user/${username}`)
+  return data.json()
+}
+
 export async function createGame({white, black}: {white: string, black: string}): Promise<GameInfo> {
   const data = await fetch(`${endpoint}/create/${white}/${black}`);
   return data.json();

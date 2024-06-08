@@ -1,12 +1,25 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createGame } from '../network/requests';
+import { createGame, getGames } from '../api/requests';
+import BoardPreview from '../components/BoardPreview';
 
 export default function UserPage() {
+  const { username } = useParams()
+  if (!username) throw Error("missing username")
+
+  const { data: games } = useQuery({
+    queryKey: ["games", username],
+    queryFn: () => getGames(username)
+  })
+
   return (
-    <div className='flex items-center justify-center'>
+    <div className='flex flex-col gap-20 items-center'>
       <CreateGame />
+      <div className='bg-black h-1 w-full'></div>
+      <div className='flex items-center justify-center gap-10 flex-wrap'>
+        {games?.map(game => <BoardPreview key={game.id} game={game} />)}
+      </div>
     </div>
   );
 }

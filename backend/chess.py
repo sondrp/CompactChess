@@ -1,6 +1,6 @@
 from typing import List
 import re
-from .types import State, Move, Action, Piece
+from data_classes import Action, Piece, Move, State
 
 # Chess implementation that is compact, but still possible to reason about (for me).
 # Not intended to be an example of good code.

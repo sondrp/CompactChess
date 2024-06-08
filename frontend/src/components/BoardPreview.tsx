@@ -1,16 +1,26 @@
+import { Link, useParams } from 'react-router-dom';
+import { GameInfo } from '../types';
 import { cn } from '../utils/cn';
 import { getPieceImage } from '../utils/getPieceImage';
-import { processGame } from './Board';
+import { processGame } from '../hooks/useChessWebsocket';
 
-export default function BoardPreview({ game }: { game: string }) {
-  const board = processGame(game);
+export default function BoardPreview({ game }: { game: GameInfo }) {
+  const { username } = useParams()
+  if (!username) throw Error("bad params")
+  const { id, white, black } = game;
+
+  const board = processGame(game.board);
 
   return (
-    <div className='grid grid-cols-8 w-fit border-black border-8'>
-      {Array.from({ length: 64 }).map((_, i) => (
-        <Square index={i} piece={board[i]} key={i} />
-      ))}
-    </div>
+    <Link to={`/${id}/${username}`} className='flex flex-col items-center'>
+      <div>{black}</div>
+      <div className='grid grid-cols-8 w-80 border-black border-8'>
+        {Array.from({ length: 64 }).map((_, i) => (
+          <Square index={i} piece={board[i]} key={i} />
+        ))}
+      </div>
+      <div>{white}</div>
+    </Link>
   );
 }
 
