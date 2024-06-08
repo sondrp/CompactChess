@@ -1,13 +1,7 @@
 from sqlite3 import connect, Connection
 from dataclasses import dataclass
 from typing import Optional
-
-@dataclass
-class GameInfo:
-    white: str
-    black: str
-    id: Optional[int] = 0
-    board: Optional[str] = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+from .types import GameInfo
 
 def query_get_game(id: int) -> Optional[GameInfo]:
     with connect("chess.db") as db:

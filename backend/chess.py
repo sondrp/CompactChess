@@ -1,34 +1,9 @@
-from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 import re
+from .types import State, Move, Action, Piece
 
 # Chess implementation that is compact, but still possible to reason about (for me).
 # Not intended to be an example of good code.
-
-@dataclass
-class State:
-    board: str
-    turn: bool
-    castle: str
-    en_passant: int
-    half_move: int
-    full_move: int
-
-@dataclass
-class Move:
-    square: int
-    result: str
-    id: str
-
-@dataclass
-class Action:
-    directions: List[int]
-    type: str
-    id: Optional[str] = ""
-
-@dataclass
-class Piece:
-    actions: List[Action]
 
 wPawnAttack = [-9, -11]
 bPawnAttack = [9, 11]
