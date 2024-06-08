@@ -66,37 +66,65 @@ def join(id: int, color: str, username: str, db: sqlite3.Connection = Depends(db
     if color == "white": 
         c.execute("""UPDATE games SET white = ? WHERE id = ?""", (username, id))
     if color == "black":
-        c.execute("""UPDATE games SET black = ? WHERE id = ?""", (username, id))
-    db.commit()
+        game.black = username
+    
+    query_update_game(game, db)
 
-@app.get("/games/{id}/{username}/{square}")
-def click(id: int, username: str, square: int, db: sqlite3.Connection = Depends(db)):
-    c = db.cursor()
-    c.execute("""SELECT board, white, black FROM games WHERE id = ?""", (id,))
-    game = c.fetchone()
+class SessionManager:
+    def __init__(self, game_info: GameInfo):
+        self.game_info = game_info
+        self.chess = Chess(game_info.board)
+        self.active_connections: list[WebSocket] = []
 
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+        return len(self.active_connections) == 0
+
+    async def click(self, square: int, db: Connection):
+        chess = self.chess
+        move_executed = chess.click(square)
+        fen = chess.fen()
+
+        if move_executed:
+            self.game_info.board = fen
+            query_update_game(self.game_info, db)
+
+        for connection in self.active_connections:
+            await connection.send_json({"board": fen, "legal_moves": chess.get_legal_moves()})
+
+
+games = {}
+
+@app.websocket("/ws/{game_id}/{username}")
+async def websocket_endpoint(
+    websocket: WebSocket, 
+    game_id: int, 
+    username: str, 
+    db: Connection = Depends(db)
+):
+
+    game = query_get_game(game_id, db)
     if not game:
-        raise HTTPException(status_code=404, detail=f"no game with id {id} exist")
+        raise HTTPException(status_code=404, detail="Game not found")
 
-    board, white, black = game[0], game[1], game[2] 
+    if game_id not in games:
+        games[game_id] = SessionManager(game)
 
-    pattern = re.compile(fr"w-{white}|b-{black}")
-    test = f"{board.split(' ')[1]}-{username}"
+    manager = games[game_id]
 
-    if not re.match(pattern, test):
-        raise HTTPException(status_code=404, detail=f"{username} is not allowed to make a move here")
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            print(data)
+            
 
-    move_exectuted = chess.click(square)
-    if move_exectuted:
-        c = db.cursor()
-        c.execute("""UPDATE games SET board = ? WHERE id = ?""", (chess.fen(), id))
-        db.commit()
-
-    return {
-        "game": chess.fen(),
-        "legal_moves": chess.get_legal_moves()
-    }
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    except WebSocketDisconnect:
+        empty_game = manager.disconnect(websocket)
+        print(f"{username} has left the game.")
+        if empty_game:
+            del games[game_id]
