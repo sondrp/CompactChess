@@ -1,8 +1,3 @@
-// To be able to a game, we need a couple of things.
-// id of the game (params)
-// name of the user that wants to join
-// that is it really...
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { join } from "../network/requests";
 import { useParams } from "react-router-dom";

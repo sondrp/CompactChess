@@ -2,6 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import { getGame, join } from '../network/requests';
 import Board from '../components/Board';
+import { useEffect, useState } from 'react';
+import { ClickResult } from '../types';
+
+// alright fantastic. Seems like all we need to do now, is connect to the websocket.
+// Time to do that then. 
+// The thing we are looking for is that on click, we should send the square to 
+// the websocket. We should then also send the 
+// 
 
 export default function GamePage() {
   const { id, username} = useParams();
@@ -17,6 +25,7 @@ export default function GamePage() {
   const { white, black } = data
   const hasBlack = black !== "no opponent"
   const hasWhite = white !== "no opponent"
+
 
   return (
     <div className='flex flex-col items-center justify-center relative'>
