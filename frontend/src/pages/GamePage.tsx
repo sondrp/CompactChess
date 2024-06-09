@@ -17,17 +17,17 @@ export default function GamePage() {
 
   const { ws, board, white, black, turn, legalMoves } = useChessWebsocket(id, username);
 
-  const [reversed, setReversed] = useState(username === black);
-
+  
   const handleClick = (square: number) => {
     if (!ws) return;
     ws.send(JSON.stringify({
       "action": "click",
       username,
       square,
-    }));
-  };
-
+      }));
+      };
+      
+  const [reversed, setReversed] = useState(username === black);
 
   const pattern = RegExp(`w-${white}-[RNBQKP]|b-${black}-[rnbqkp]`);
 

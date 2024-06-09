@@ -112,7 +112,7 @@ def en_passant_filter(state: State, move: Move):
     if move.id != "enPassant": return True
     if move.square != state.en_passant: return False
     board = list(move.result)
-    board[move.square + (10 if state.turn else -1)] = " "
+    board[move.square + (10 if state.turn else -10)] = " "
     move.result = "".join(board)
     return True
 

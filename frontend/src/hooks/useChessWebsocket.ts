@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { ClickResult, GameInfo, LegalMove } from "../types";
+import { GameInfo, LegalMove } from "../types";
 
-// I promise I will move these processing steps to the api.
-// they should not happen here
+
 export function processGame(game: string) {
     const match = /^\S+/.exec(game);
     if (!match) return '';
@@ -46,23 +45,13 @@ export function useChessWebsocket(id: string, username: string) {
 
         // TODO : change these to check for property, not if they have the type
         socket.addEventListener('message', event => {
-            const websocketMessage: Record<string, string> = JSON.parse(event.data)
-  
-            if (websocketMessage["type"] === "game_info") {
-                const gameInfo: GameInfo = JSON.parse(websocketMessage["game_info"])
-                setBoard(processGame(gameInfo.board))
-                setTurn(extractTurn(gameInfo.board))
-                setWhite(gameInfo.white)
-                setBlack(gameInfo.black) 
-              }
 
-            if (websocketMessage["type"] === "click_result") {
-              const fen: string = websocketMessage["game"]
-              const legal_moves = JSON.parse(websocketMessage["legal_moves"]) 
-              setTurn(extractTurn(fen))
-              setBoard(processGame(fen))
-              setLegalMoves(processLegalMoves(legal_moves))
-            }
+            const message = JSON.parse(event.data)
+            setBoard(processGame(message["board"]))
+            setTurn(extractTurn(message["board"]))
+            setLegalMoves(processLegalMoves(message["legal_moves"]))
+            setWhite(message["white"])
+            setBlack(message["black"])
         })
       
         return () => {
