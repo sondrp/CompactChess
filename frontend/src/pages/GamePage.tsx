@@ -1,32 +1,28 @@
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import Square from '../components/Square';
-import { GameInfo } from '../types';
 import { useChessWebsocket } from '../hooks/useChessWebsocket';
-
-
-
-// Time to figure out how to actually send data to the websocket. 
-// I need to register players, and I need to post moves.
-// I also have to send username along with the click, to confirm that they are allowed to make the move.
-// Otherwise I will run into problems.
 
 export default function GamePage() {
   const { id, username } = useParams();
   if (!username || !id) throw Error('something went wrong with the params');
 
-  const { ws, board, white, black, turn, legalMoves } = useChessWebsocket(id, username);
+  const { ws, board, white, black, turn, legalMoves } = useChessWebsocket(
+    id,
+    username
+  );
 
-  
   const handleClick = (square: number) => {
     if (!ws) return;
-    ws.send(JSON.stringify({
-      "action": "click",
-      username,
-      square,
-      }));
-      };
-      
+    ws.send(
+      JSON.stringify({
+        action: 'click',
+        username,
+        square,
+      })
+    );
+  };
+
   const [reversed, setReversed] = useState(username === black);
 
   const pattern = RegExp(`w-${white}-[RNBQKP]|b-${black}-[rnbqkp]`);
